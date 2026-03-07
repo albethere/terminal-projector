@@ -1,28 +1,43 @@
 #!/usr/bin/env bash
+# =============================================================================
+#  Terminal Projector - Cross-Platform Install Router
+#  Detects OS and routes to the correct platform-specific installer.
+# =============================================================================
 
-# Terminal Projector Dependencies Installer
+set -euo pipefail
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-set -e
+detect_os() {
+  case "$(uname -s)" in
+    Darwin*)  echo "mac" ;;
+    Linux*)   echo "linux" ;;
+    MINGW*|CYGWIN*|MSYS*) echo "windows" ;;
+    *)        echo "unknown" ;;
+  esac
+}
 
-echo "[*] Checking for Homebrew..."
-if ! command -v brew &> /dev/null; then
-    echo "[-] Homebrew is not installed. Please install it first:"
-    echo '    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"'
+OS=$(detect_os)
+
+case "$OS" in
+  mac)
+    echo "[*] macOS detected – launching install_mac.sh"
+    chmod +x "$SCRIPT_DIR/install_mac.sh"
+    exec "$SCRIPT_DIR/install_mac.sh"
+    ;;
+  linux)
+    echo "[*] Linux detected – launching install_linux.sh"
+    chmod +x "$SCRIPT_DIR/install_linux.sh"
+    exec "$SCRIPT_DIR/install_linux.sh"
+    ;;
+  windows)
+    echo "[*] Windows (MINGW/Cygwin) detected – please run install_windows.ps1 in PowerShell instead:"
+    echo '    powershell -ExecutionPolicy Bypass -File install_windows.ps1'
+    ;;
+  *)
+    echo "[!] Unknown OS: $(uname -s). Please run the appropriate platform script manually."
+    echo "    macOS:   ./install_mac.sh"
+    echo "    Linux:   ./install_linux.sh"
+    echo "    Windows: powershell -ExecutionPolicy Bypass -File install_windows.ps1"
     exit 1
-fi
-
-echo "[*] Checking for Rust (Cargo)..."
-if ! command -v cargo &> /dev/null; then
-    echo "[-] Cargo is not installed. Installing Rust..."
-    curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
-    source "$HOME/.cargo/env"
-fi
-
-echo "[*] Installing Homebrew dependencies..."
-brew update
-brew install fastfetch btop cbonsai cmatrix lolcat
-
-echo "[*] Installing weathr via Cargo..."
-cargo install weathr
-
-echo "[+] Installation complete! You can now run ./projector.py"
+    ;;
+esac
