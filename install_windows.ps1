@@ -179,7 +179,7 @@ try {
 
 # ── Rust / Cargo ───────────────────────────────────────────────────────────────
 if (Test-Command 'cargo') {
-    Write-OK "Rust/Cargo already installed"
+    Write-OK "Rust $(rustc --version 2>$null | Select-String '\d+\.\d+' | ForEach-Object { $_.Matches[0].Value }) already installed"
 } else {
     Write-Info "Installing Rust via rustup..."
     $rustupUrl = 'https://static.rust-lang.org/rustup/dist/x86_64-pc-windows-msvc/rustup-init.exe'
@@ -189,13 +189,17 @@ if (Test-Command 'cargo') {
     Remove-Item $rustupExe
     # Reload PATH
     $env:PATH += ";$env:USERPROFILE\.cargo\bin"
-    
-    # Ensure a default toolchain is set
-    if (Test-Command 'rustup') {
-        & rustup default stable --quiet
-    }
-    Write-OK "Rust installed and set to stable"
 }
+
+# Ensure a default toolchain is set if rustup is present
+if (Test-Command 'rustup') {
+    $default = & rustup default 2>&1
+    if ($null -eq $default -or $default -match "no default toolchain") {
+        Write-Info "No default toolchain detected. Setting to stable..."
+        & rustup default stable
+    }
+}
+Write-OK "Rust environment verified"
 
 # ── weathr ────────────────────────────────────────────────────────────────────
 if (Test-Command 'weathr') {

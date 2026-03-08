@@ -64,18 +64,23 @@ fi
 
 # ── Rust / Cargo ─────────────────────────────────────────────────────────────
 if command -v cargo &>/dev/null; then
-  ok "Rust $(rustc --version | awk '{print $2}') already installed"
+  ok "Rust $(rustc --version 2>/dev/null || echo "detected but no default toolchain") already installed"
 else
   warn "Rust/Cargo not found. Installing via rustup..."
   curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --quiet
   # shellcheck disable=SC1091
   source "$HOME/.cargo/env"
-  # Ensure a default toolchain is set
-  if command -v rustup &>/dev/null; then
-    rustup default stable --quiet
-  fi
-  ok "Rust installed and set to stable"
 fi
+
+# Ensure a default toolchain is set if rustup is present
+if command -v rustup &>/dev/null; then
+  # Check if a default exists, if not, set it
+  if ! rustup default >/dev/null 2>&1; then
+    info "No default toolchain detected. Setting to stable..."
+    rustup default stable
+  fi
+fi
+ok "Rust environment verified"
 
 # ── Python 3.10+ check ────────────────────────────────────────────────────────
 PYTHON=$(command -v python3 || true)
