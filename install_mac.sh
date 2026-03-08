@@ -110,48 +110,30 @@ else
   ok "weathr installed"
 fi
 
-# ── Terminal Check / Ghostty ─────────────────────────────────────────────────
+# ── Terminal Check / Apple Terminal ──────────────────────────────────────────
 echo ""
 info "Checking terminal emulator..."
 TERM_APP="${TERM_PROGRAM:-${LC_TERMINAL:-unknown}}"
 
-ghostty_installed() {
-  [[ -d "/Applications/Ghostty.app" ]] || command -v ghostty &>/dev/null
-}
-
-if ghostty_installed; then
-  ok "Ghostty is already installed – ideal environment detected"
+if [[ "$TERM_APP" == "Apple_Terminal" ]]; then
+  ok "Apple Terminal detected – ideal environment detected (Stable & Native)"
 else
-  warn "Ghostty terminal not detected (current: ${TERM_APP})"
+  warn "Apple Terminal not detected (current: ${TERM_APP})"
   echo ""
-  echo -e "${YELLOW}  Ghostty is the recommended terminal for Terminal Projector.${RESET}"
-  echo "  It supports native GPU-accelerated rendering and precise ANSI control."
+  echo -e "${YELLOW}  Apple Terminal is the recommended terminal for Terminal Projector.${RESET}"
+  echo "  It provides the most stable native environment on macOS."
   echo ""
-  read -rp "  Install Ghostty via Homebrew Cask? [y/N] " INSTALL_GHOSTTY
-  if [[ "$INSTALL_GHOSTTY" =~ ^[Yy]$ ]]; then
-    info "Installing Ghostty..."
-    brew install --cask ghostty
-    ok "Ghostty installed. Open it from /Applications/Ghostty.app and re-run projector.py inside it for best results."
-  else
-    echo ""
-    case "$TERM_APP" in
-      iTerm.app)
-        warn "iTerm2 detected – recommended settings for best experience:"
-        echo "  Preferences → Profiles → Window → Transparency: 10"
-        echo "  Preferences → Profiles → Terminal → Check 'Use modern parser'"
-        ;;
-      Apple_Terminal)
-        warn "Apple Terminal detected – it lacks true-colour and GPU compositing."
-        warn "Visuals will be degraded. Strongly recommend installing Ghostty or iTerm2."
-        ;;
-      vscode)
-        warn "VS Code terminal detected – some animations may flicker. Use a dedicated terminal app."
-        ;;
-      *)
-        warn "Terminal '${TERM_APP}' detected. No specific adjustments applied."
-        ;;
-    esac
-  fi
+  case "$TERM_APP" in
+    iTerm.app)
+      warn "iTerm2 detected. For best stability, consider switching to the native Terminal.app."
+      ;;
+    vscode)
+      warn "VS Code terminal detected – some animations may flicker. Use Terminal.app instead."
+      ;;
+    *)
+      warn "Terminal '${TERM_APP}' detected. No specific adjustments applied."
+      ;;
+  esac
 fi
 
 # ── Make projector executable ─────────────────────────────────────────────────

@@ -87,9 +87,7 @@ Edit it to add/remove scenes, adjust durations, or swap commands. Changes take e
 
 ## Terminal Recommendation
 
-**Ghostty** is the ideal host. It offers:
-- Native GPU compositing
-- Precise ANSI / true-colour support
-- Click-through and transparency options for wallpaper pinning
-
-Install from [ghostty.org](https://ghostty.org) or let the installer do it for you.
+For the best experience, you should use a stable, native terminal emulator with good True Color support:
+- **macOS:** Apple Terminal (Native, stable) or iTerm2
+- **Linux:** Kitty or Alacritty (GPU-accelerated)
+- **Windows:** Windows Terminal

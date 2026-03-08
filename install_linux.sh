@@ -4,32 +4,6 @@
 #  Handles: apt, snap fallbacks, Rust/Cargo, Ghostty check & install
 # =============================================================================
 
-# ── TERM Sanitization (must run BEFORE set -e and BEFORE any tput/clear call)
-# When SSH-ing from Ghostty, it forwards TERM=xterm-ghostty. If the remote
-# machine doesn't have the ghostty terminfo entry, tput/clear will print
-# "unknown terminal type" and exit non-zero, aborting the whole script.
-# We normalise to xterm-256color in that case, and inform the user why.
-_TERM_ORIGINAL="${TERM:-}"
-if ! tput longname &>/dev/null 2>&1; then
-  echo "[!] TERM='${_TERM_ORIGINAL}' is not known to this system's terminfo database."
-  echo "[*] Resetting TERM to xterm-256color for this session..."
-  export TERM=xterm-256color
-fi
-# Also install the Ghostty terminfo locally so future SSH sessions work natively.
-# This is a no-op if the entry already exists.
-if [[ "${_TERM_ORIGINAL}" == *ghostty* ]] && ! infocmp xterm-ghostty &>/dev/null 2>&1; then
-  echo "[*] Installing Ghostty terminfo on this host..."
-  # The terminfo source is shipped inside any Ghostty installation; fetch a
-  # known-good copy from the official repo as a fallback.
-  _GHOSTTY_TIC_URL="https://raw.githubusercontent.com/ghostty-org/ghostty/main/src/terminal/ghostty.terminfo"
-  if command -v curl &>/dev/null && curl -fsSL "$_GHOSTTY_TIC_URL" -o /tmp/ghostty.terminfo 2>/dev/null; then
-    mkdir -p "${HOME}/.terminfo"
-    tic -x -o "${HOME}/.terminfo" /tmp/ghostty.terminfo 2>/dev/null && \
-      echo "[*] Ghostty terminfo installed to ~/.terminfo (future SSH sessions will work natively)."
-    rm -f /tmp/ghostty.terminfo
-  fi
-fi
-
 set -euo pipefail
 
 # ── Colours ─────────────────────────────────────────────────────────────────
@@ -219,66 +193,41 @@ install_cbonsai() {
 }
 install_cbonsai
 
-# ── Terminal Check / Ghostty ─────────────────────────────────────────────────
+# ── Terminal Check ───────────────────────────────────────────────────────────
 echo ""
 info "Checking terminal emulator..."
 
-ghostty_installed() {
-  command -v ghostty &>/dev/null || \
-  [[ -f /usr/local/bin/ghostty ]] || \
-  [[ -f /usr/bin/ghostty ]]
-}
-
 detect_terminal() {
-  if [[ -n "${GHOSTTY_RESOURCES_DIR:-}" ]]; then echo "ghostty"; return; fi
   if [[ -n "${KITTY_PID:-}" ]]; then echo "kitty"; return; fi
   if [[ -n "${ALACRITTY_SOCKET:-}" ]]; then echo "alacritty"; return; fi
   if [[ -n "${WEZTERM_EXECUTABLE:-}" ]]; then echo "wezterm"; return; fi
+  if [[ -n "${GHOSTTY_RESOURCES_DIR:-}" ]]; then echo "ghostty"; return; fi
   echo "${TERM_PROGRAM:-${LC_TERMINAL:-${TERM:-unknown}}}"
 }
 
 CURRENT_TERM=$(detect_terminal)
 
-if ghostty_installed || [[ "$CURRENT_TERM" == "ghostty" ]]; then
-  ok "Ghostty is installed – ideal environment detected"
+if [[ "$CURRENT_TERM" == "kitty" || "$CURRENT_TERM" == "alacritty" ]]; then
+  ok "GPU-accelerated terminal (${CURRENT_TERM}) detected – ideal environment"
 else
-  warn "Ghostty terminal not detected (current: ${CURRENT_TERM})"
+  warn "Terminal detected: ${CURRENT_TERM}"
   echo ""
-  echo -e "${YELLOW}  Ghostty provides GPU-accelerated rendering for the best experience.${RESET}"
+  echo -e "${YELLOW}  For best performance on Linux, a GPU-accelerated terminal is recommended.${RESET}"
+  echo "  (e.g., Kitty or Alacritty)"
   echo ""
-  read -rp "  Install Ghostty? [y/N] " INSTALL_GHOSTTY
-  if [[ "$INSTALL_GHOSTTY" =~ ^[Yy]$ ]]; then
-    info "Installing Ghostty..."
-    # Official install method for Linux via .deb
-    GHOSTTY_URL=$(curl -s https://api.github.com/repos/ghostty-org/ghostty/releases/latest \
-      | grep "browser_download_url.*linux.*amd64.deb" | cut -d\" -f4 | head -1)
-    if [[ -n "$GHOSTTY_URL" ]]; then
-      curl -L "$GHOSTTY_URL" -o /tmp/ghostty.deb
-      $SUDO dpkg -i /tmp/ghostty.deb
-      rm -f /tmp/ghostty.deb
-      ok "Ghostty installed. Launch it and re-run projector.py inside it."
-    else
-      warn "Could not find a Ghostty .deb release for your architecture."
-      warn "Install manually from: https://github.com/ghostty-org/ghostty/releases"
-    fi
-  else
-    echo ""
-    case "$CURRENT_TERM" in
-      kitty)
-        warn "Kitty detected – great GPU-accelerated option. Should work well."
-        ;;
-      alacritty)
-        warn "Alacritty detected – GPU-accelerated but no ligature support. Good choice."
-        ;;
-      xterm*|vte*)
-        warn "Legacy terminal (${CURRENT_TERM}) detected. Animations may be choppy."
-        warn "Consider installing Kitty: sudo apt install kitty"
-        ;;
-      *)
-        warn "Terminal '${CURRENT_TERM}' detected. No specific adjustments applied."
-        ;;
-    esac
-  fi
+  
+  case "$CURRENT_TERM" in
+    xterm*|vte*|gnome-terminal)
+      warn "Legacy/standard terminal detected. Animations may be choppy."
+      warn "Consider installing Kitty: sudo apt install kitty"
+      ;;
+    ghostty)
+      warn "Ghostty detected. Note that we recommend native stable terminals for Linux."
+      ;;
+    *)
+      # No specific adjustments
+      ;;
+  esac
 fi
 
 # ── Persistence: optional systemd unit ───────────────────────────────────────

@@ -241,18 +241,11 @@ if (Test-Command 'cbonsai') {
     Write-Warn "cbonsai is not available in winget/choco. Install it via Scoop: scoop install cbonsai"
 }
 
-# ── Terminal / Ghostty Check ───────────────────────────────────────────────────
+# ── Terminal Check ───────────────────────────────────────────────────
 Write-Host ""
 Write-Info "Checking terminal emulator..."
 
-function Test-Ghostty {
-    return (Test-Command 'ghostty') -or
-           ($env:GHOSTTY_RESOURCES_DIR -ne $null) -or
-           (Test-Path "$env:LOCALAPPDATA\Programs\Ghostty\ghostty.exe")
-}
-
 function Get-CurrentTerminal {
-    if ($env:GHOSTTY_RESOURCES_DIR)   { return 'ghostty' }
     if ($env:WT_SESSION)              { return 'windows-terminal' }
     if ($env:TERM_PROGRAM)            { return $env:TERM_PROGRAM }
     if ($env:ConEmuPID)               { return 'conemu' }
@@ -261,47 +254,30 @@ function Get-CurrentTerminal {
 
 $currentTerm = Get-CurrentTerminal
 
-if (Test-Ghostty) {
-    Write-OK "Ghostty is installed – ideal environment detected"
+if ($currentTerm -eq 'windows-terminal') {
+    Write-OK "Windows Terminal detected – ideal environment detected"
 } else {
-    Write-Warn "Ghostty terminal not detected (current: $currentTerm)"
+    Write-Warn "Terminal detected: $currentTerm"
     Write-Host ""
-    Write-Host "  Ghostty is the recommended terminal for Terminal Projector." -ForegroundColor Yellow
+    Write-Host "  Windows Terminal is the recommended terminal for Terminal Projector." -ForegroundColor Yellow
     Write-Host "  It provides GPU-accelerated rendering and precise ANSI control." -ForegroundColor White
     Write-Host ""
 
-    $installGhostty = Confirm-Choice "  Install Ghostty?"
-    if ($installGhostty) {
-        Write-Info "Installing Ghostty..."
+    $installWT = Confirm-Choice "  Install Windows Terminal via winget?"
+    if ($installWT) {
+        Write-Info "Installing Windows Terminal..."
         if ($PKG_MANAGER -eq 'winget') {
-            winget install --id ghostty.ghostty --accept-source-agreements --accept-package-agreements -e --silent
-            Write-OK "Ghostty installed. Launch it and re-run projector.py inside it for best results."
+            winget install --id Microsoft.WindowsTerminal --accept-source-agreements --accept-package-agreements -e --silent
+            Write-OK "Windows Terminal installed. Launch it and re-run projector.py inside it for best results."
         } else {
-            # Direct download
-            $ghReleases = Invoke-RestMethod 'https://api.github.com/repos/ghostty-org/ghostty/releases/latest'
-            $asset = $ghReleases.assets | Where-Object { $_.name -match 'windows.*x64.*msi' } | Select-Object -First 1
-            if ($asset) {
-                $msiPath = "$env:TEMP\ghostty.msi"
-                Write-Info "Downloading $($asset.name)..."
-                Invoke-WebRequest -Uri $asset.browser_download_url -OutFile $msiPath
-                Start-Process msiexec.exe -ArgumentList "/i `"$msiPath`" /quiet /norestart" -Wait
-                Remove-Item $msiPath
-                Write-OK "Ghostty installed"
-            } else {
-                Write-Warn "Could not find a Ghostty Windows MSI release."
-                Write-Warn "Install manually from: https://github.com/ghostty-org/ghostty/releases"
-            }
+            Write-Warn "winget is not available. Please install Windows Terminal from the Microsoft Store."
         }
     } else {
         Write-Host ""
         switch ($currentTerm) {
-            'windows-terminal' {
-                Write-Warn "Windows Terminal detected – a good fallback."
-                Write-Warn "For best results, enable 'Acrylic' background in Settings → Appearance."
-            }
             'conemu' {
                 Write-Warn "ConEmu detected – functional but may have ANSI rendering issues."
-                Write-Warn "Consider switching to Windows Terminal or Ghostty."
+                Write-Warn "Consider switching to Windows Terminal."
             }
             'powershell-host' {
                 Write-Warn "Raw PowerShell host detected – limited ANSI support."
