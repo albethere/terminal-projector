@@ -101,7 +101,11 @@ else
   curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --quiet
   # shellcheck disable=SC1091
   source "$HOME/.cargo/env"
-  ok "Rust installed"
+  # Ensure a default toolchain is set
+  if command -v rustup &>/dev/null; then
+    rustup default stable --quiet
+  fi
+  ok "Rust installed and set to stable"
 fi
 export PATH="$HOME/.cargo/bin:$PATH"
 

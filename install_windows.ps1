@@ -189,7 +189,12 @@ if (Test-Command 'cargo') {
     Remove-Item $rustupExe
     # Reload PATH
     $env:PATH += ";$env:USERPROFILE\.cargo\bin"
-    Write-OK "Rust installed"
+    
+    # Ensure a default toolchain is set
+    if (Test-Command 'rustup') {
+        & rustup default stable --quiet
+    }
+    Write-OK "Rust installed and set to stable"
 }
 
 # ── weathr ────────────────────────────────────────────────────────────────────
