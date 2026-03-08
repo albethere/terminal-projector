@@ -8,7 +8,7 @@ cycling infinitely like a living wallpaper.
 
 - Python 3.10+
 - Rust / Cargo (auto-installed)
-- A GPU-accelerated terminal — [Ghostty](https://ghostty.org) is strongly recommended
+- A stable terminal emulator — Apple Terminal, Kitty, or Windows Terminal is recommended
 
 ## Installation
 
@@ -36,7 +36,7 @@ Or run the platform-specific installer directly:
 - Installs **Rust** via `rustup` if missing
 - Installs all binaries via Homebrew: `fastfetch`, `btop`, `cbonsai`, `cmatrix`, `lolcat`
 - Compiles **weathr** via Cargo
-- Detects terminal emulator; offers to install **Ghostty** if not present with per-terminal fallback advice
+- Detects terminal emulator and provides advice for non-native terminals
 
 #### Ubuntu / Debian (`install_linux.sh`)
 - Detects distro and verifies Debian/Ubuntu lineage
@@ -46,15 +46,15 @@ Or run the platform-specific installer directly:
 - Installs `btop` from apt or GitHub binary
 - Builds `cbonsai` from source if not in apt
 - Installs `cmatrix`, `lolcat` via apt / gem / pip fallback chain
-- Detects terminal; offers to install **Ghostty** via .deb if not present
+- Detects terminal and provides advice for unsupported emulators
 - Optionally installs a **systemd user service** for auto-launch at login
 
 #### Windows (`install_windows.ps1`)
 - Detects/installs package manager: **winget → scoop → choco** (in priority order)
 - Installs **Python 3.12** and **Rust** via `rustup-init.exe`
 - Installs `fastfetch`, `btop`, `lolcat`, `cmatrix`, `cbonsai` via available package manager
-- Detects terminal: **Ghostty**, Windows Terminal, ConEmu, PowerShell host
-- Offers to install **Ghostty** via winget or MSI release
+- Detects terminal: Windows Terminal, ConEmu, PowerShell host
+- Offers to install Windows Terminal via winget if not present
 - Creates a `projector.bat` shim for easy launching
 
 ## Usage

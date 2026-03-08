@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # =============================================================================
 #  Terminal Projector - macOS Installer
-#  Handles: Homebrew, Rust/Cargo, ghostty terminal check, and all dependencies
+#  Handles: Homebrew, Rust/Cargo, terminal check, and all dependencies
 # =============================================================================
 
 set -euo pipefail

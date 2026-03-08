@@ -5,7 +5,7 @@
 .DESCRIPTION
     Installs all dependencies for Terminal Projector on Windows.
     Handles: winget, scoop, chocolatey (in priority order), Rust/Cargo,
-    Python, and Windows Terminal / Ghostty detection.
+    Python, and Windows Terminal detection.
 .NOTES
     Run as Administrator for full functionality.
     PowerShell 7+ is recommended for best compatibility.

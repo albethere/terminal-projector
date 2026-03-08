@@ -1,10 +1,14 @@
 #!/usr/bin/env bash
 # =============================================================================
 #  Terminal Projector - Ubuntu / Debian Linux Installer
-#  Handles: apt, snap fallbacks, Rust/Cargo, Ghostty check & install
+#  Handles: apt, snap fallbacks, Rust/Cargo
 # =============================================================================
 
 set -euo pipefail
+
+# Force a standard terminal type to prevent "unknown terminal type" errors
+# from installers/commands if the user is running from an exotic terminal
+export TERM=xterm-256color
 
 # ── Colours ─────────────────────────────────────────────────────────────────
 RED='\033[0;31m'
@@ -201,7 +205,6 @@ detect_terminal() {
   if [[ -n "${KITTY_PID:-}" ]]; then echo "kitty"; return; fi
   if [[ -n "${ALACRITTY_SOCKET:-}" ]]; then echo "alacritty"; return; fi
   if [[ -n "${WEZTERM_EXECUTABLE:-}" ]]; then echo "wezterm"; return; fi
-  if [[ -n "${GHOSTTY_RESOURCES_DIR:-}" ]]; then echo "ghostty"; return; fi
   echo "${TERM_PROGRAM:-${LC_TERMINAL:-${TERM:-unknown}}}"
 }
 
@@ -220,9 +223,6 @@ else
     xterm*|vte*|gnome-terminal)
       warn "Legacy/standard terminal detected. Animations may be choppy."
       warn "Consider installing Kitty: sudo apt install kitty"
-      ;;
-    ghostty)
-      warn "Ghostty detected. Note that we recommend native stable terminals for Linux."
       ;;
     *)
       # No specific adjustments
